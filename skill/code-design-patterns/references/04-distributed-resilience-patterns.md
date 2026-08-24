@@ -7,11 +7,11 @@ failure, and *unknown*. The third one is why idempotency matters.
 ## Contents
 
 - [Circuit Breaker](#circuit-breaker) · [Retry with backoff](#retry-with-backoff-and-jitter) ·
-  [Timeout budgets](#timeouts-and-deadline-budgets) · [Bulkhead](#bulkhead) ·
-  [Fallback / graceful degradation](#fallback-and-graceful-degradation)
+  [Hedged requests](#hedged-requests) · [Timeout budgets](#timeouts-and-deadline-budgets) ·
+  [Bulkhead](#bulkhead) · [Fallback / graceful degradation](#fallback-and-graceful-degradation)
 - [Rate limiting](#rate-limiting) · [Load shedding](#load-shedding)
 - [Idempotency key](#idempotency-key) · [Saga](#saga) · [Outbox](#transactional-outbox) ·
-  [Dead letter queue](#dead-letter-queue)
+  [Expand–Contract](#expandcontract-parallel-change) · [Dead letter queue](#dead-letter-queue)
 - [Caching](#caching-patterns) · [API Gateway / BFF](#api-gateway--bff) ·
   [Sidecar & Ambassador](#sidecar-and-ambassador) · [Service discovery](#service-discovery) ·
   [Leader election](#leader-election)
@@ -75,8 +75,8 @@ whether the operation is safe to repeat.
 ## Hedged Requests
 
 **Force:** tail latency, not failure. p99 is ten times p50 because a small fraction of calls land on
-a slow replica — and waiting for the timeout burns the entire budget on a request that was never
-going to be fast.
+a slow replica — a GC pause, a cold cache, an unlucky node — and waiting for the timeout to fire
+burns the whole budget on a request that was never going to be fast.
 
 Send the request; if nothing has come back by roughly the p95 mark, send a **second** request to a
 different replica and take whichever answers first, cancelling the loser.
@@ -85,12 +85,17 @@ different replica and take whichever answers first, cancelling the loser.
 latency threshold, while the first request is still in flight. Retries fix availability; hedges fix
 tail latency. They are not substitutes.
 
-**The cost, which must be capped:** hedging duplicates work. Limit hedges to a small fraction of
-traffic (Google's practice is ≤5%) and count them against the same retry budget above. Uncapped
-hedging doubles fleet load exactly when the fleet is least able to absorb it.
+**Requirements, all mandatory:** the operation must be idempotent or idempotency-keyed, because both
+requests may execute. Hedge at p95, not p50 — hedging at the median doubles your traffic. Cap hedged
+traffic with a budget the same way as retries (Google's practice is ≤5%) and count it against the
+same retry budget. And cancel the loser, or you have simply doubled load on a struggling backend.
 
-**Not this when:** the operation is not idempotent, or the backend is already saturated — under
-overload, hedging accelerates the collapse it was meant to hide.
+**In the wild:** the canonical treatment is Dean & Barroso's *The Tail at Scale*; gRPC supports
+hedging as a first-class policy alongside retries.
+
+**Not this when:** the operation is expensive, mutating without an idempotency key, or the service
+is uniformly slow rather than variably slow — hedging a saturated backend accelerates the collapse
+it was meant to hide.
 
 ## Timeouts and Deadline Budgets
 
@@ -122,29 +127,6 @@ personalised recommendations" is a better outcome than a 500.
 
 **The rule:** a fallback must not itself be able to fail in the same way. A fallback that calls
 another service has not removed the dependency.
-
-## Hedged Requests
-
-**Force:** p99 latency is dominated by unlucky requests — a slow node, a GC pause, a cold cache —
-not by a genuinely slow service. Waiting for the timeout to fire wastes the whole timeout budget.
-
-Send the request; if no response by a threshold (typically p95), send a **second** request to a
-different replica and take whichever returns first, cancelling the loser.
-
-**This is not a retry.** A retry fires *after* failure; a hedge fires *before* it, while the
-first request is still in flight. Retries fix errors, hedges fix latency.
-
-**Requirements, all mandatory:** the operation must be idempotent or idempotency-keyed, because
-both requests may execute. Hedge at p95, not p50 — hedging at the median doubles your traffic.
-Cap hedged traffic with a budget the same way as retries (5% is typical). And cancel the loser,
-or you have simply doubled load on a struggling backend.
-
-**In the wild:** the canonical treatment is Dean & Barroso's *The Tail at Scale*; gRPC supports
-hedging as a first-class policy alongside retries.
-
-**Not this when:** the operation is expensive, mutating without an idempotency key, or the
-service is uniformly slow rather than variably slow — hedging a saturated backend accelerates
-its collapse.
 
 ## Rate Limiting
 
@@ -219,22 +201,33 @@ Gives at-least-once delivery — so consumers must be idempotent (see idempotenc
 ## Expand–Contract (Parallel Change)
 
 **Force:** a schema, message format, or API must change — but producers and consumers deploy
-independently, so there is no instant at which you can change both sides at once.
+independently, so there is no instant at which you can change both sides at once. A "coordinated
+release" is the admission that your services are a distributed monolith.
 
 Three phases, each independently deployable and each reversible on its own:
 
-1. **Expand** — add the new field, column, or endpoint *alongside* the old one. Write both; keep
-   reading the old. Nothing has broken yet because nothing depends on the new shape.
-2. **Migrate** — backfill existing rows, then move readers to the new shape one deployment at a
-   time. Both shapes remain valid throughout.
-3. **Contract** — stop writing the old shape, wait out any consumer still lagging, then delete it.
+1. **Expand** — add the new field, column, or endpoint *alongside* the old one. Writers populate
+   *both*; readers still read the old. This deploy is backward compatible, so it can roll back
+   freely. New columns are nullable or defaulted — a `NOT NULL` column added here breaks the old
+   writer.
+2. **Migrate** — backfill existing rows, then move readers to the new shape one service at a time.
+   Both shapes remain valid throughout; this phase can last weeks and that is fine.
+3. **Contract** — once no reader touches the old shape (verify with a metric, not with confidence),
+   stop writing it, wait out any consumer still lagging, then delete it.
+
+**The rule that makes it work:** never rename. A rename is a delete plus an add executed atomically,
+which is precisely the thing you cannot do across independently deployed services. Add, migrate,
+remove.
 
 **The phase teams skip is the third one.** A codebase full of half-finished expansions pays the
 dual-write cost forever and accumulates columns nobody can safely drop because nobody remembers who
-reads them. Put the contract step on the calendar when you start the expand step.
+reads them. Instrument reads of the deprecated field, wait until that counter has been flat at zero
+for longer than your longest client's cache or release cycle, and put the contract step on the
+calendar when you start the expand step.
 
 **Related:** the same shape underlies safe database migrations (add nullable column → backfill →
-enforce constraint), API versioning, and the Strangler Fig for whole-service replacement.
+enforce constraint), API versioning, and the **Strangler Fig**, which applies it at system scale —
+route new functionality through a new module, migrate incrementally, delete the old path last.
 
 **Not this when:** you own both sides and can deploy them atomically — a single service and its own
 private table. Then just change it.
@@ -293,33 +286,6 @@ Use a lease with a TTL in a consensus store (etcd, ZooKeeper, Consul) or a datab
 **The correctness trap:** a leader that pauses (GC, network partition) may still believe it is
 leader after its lease expires — two leaders briefly. Guard downstream writes with a monotonically
 increasing **fencing token** so stale-leader writes are rejected.
-
-## Expand-Contract (Parallel Change)
-
-**Force:** a schema or API must change, but producers and consumers deploy independently and
-there is no instant in which you can change both. A "coordinated release" is the admission that
-your services are a distributed monolith.
-
-Three phases, each independently deployable and rollback-safe:
-
-1. **Expand** — add the new field/column/endpoint alongside the old. Nothing reads it yet.
-   Writers populate *both*. This deploy is backward compatible, so it can roll back freely.
-2. **Migrate** — backfill existing rows, then move readers to the new field one service at a
-   time. Old and new coexist; this phase can last weeks and that is fine.
-3. **Contract** — once no reader touches the old field (verify with a metric, not with
-   confidence), stop writing it, then drop it.
-
-**The rule that makes it work:** never rename. A rename is a delete plus an add executed
-atomically, which is precisely the thing you cannot do across independently deployed services.
-Add, migrate, remove.
-
-**Where teams get it wrong:** skipping the verification before Contract. Instrument reads of the
-deprecated field and wait until that counter has been flat at zero for longer than your longest
-client's cache or release cycle. Also: a `NOT NULL` column added in the Expand phase breaks the
-old writer, so new columns are nullable or defaulted until Contract.
-
-**Related:** the **Strangler Fig** applies the same shape at system scale — route new
-functionality through a new module, migrate incrementally, delete the old path last.
 
 ---
 
