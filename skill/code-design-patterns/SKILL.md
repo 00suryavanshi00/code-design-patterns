@@ -14,10 +14,38 @@ interface and a function.
 The bar to clear: **every pattern in the output must be traceable to a specific, stated force
 in the requirements.** If you cannot name the force, remove the pattern.
 
+## What this skill is and is not for
+
+**In scope:** the design of classes, modules, components and the boundaries between services — the
+level at which patterns, interfaces and contracts are the decision.
+
+**Out of scope, and worth saying so rather than half-answering:** capacity estimation and back-of-
+envelope maths, cluster and storage sizing, picking a database or broker product, network topology,
+CAP-theorem-shaped "design Twitter/YouTube" system design, algorithm and data-structure selection,
+and security auditing. "Design a rate limiter that works across ten nodes" is this skill — the
+patterns and the correctness argument. "How many nodes, and Redis or Cassandra?" is not; answer that
+from general knowledge, without pulling this workflow into it.
+
+The reason the line matters: a design question that gets the full workflow when it needed two
+sentences is the same waste as a pattern that gets added because it is famous.
+
 ## Workflow
 
-Work in this order. Do not skip to step 4 — designs that start from a pattern name almost
-always end up contorted around it.
+**Scale the ceremony to the question first.** The steps below are sized for a design, not for every
+question that mentions a pattern:
+
+| The task | What to do |
+|---|---|
+| A single-pattern question — "should I use Visitor here?", "is this Strategy earning its place?" — or a review of under ~50 lines | Steps 3 and 4 only. Name the force, answer directly, give the trade-off in two or three sentences. No ledger, no numbered requirements, no rubric. |
+| Reviewing an existing design or file | Step 6 is the structure: rubric, then the two highest-leverage problems. Skip 1–5. |
+| A design with three or more collaborating classes, an LLD or machine-coding problem, "design a …" | The full workflow. |
+
+Producing a pattern ledger and a rubric score for "should I use Visitor here?" is **process-stuffing**
+— the same failure as pattern-stuffing, wearing a checklist. When the size is genuinely unclear,
+take the lighter path and offer the heavier one.
+
+For a full design, work in this order. Do not skip to step 4 — designs that start from a pattern
+name almost always end up contorted around it.
 
 ### 1. Pin the requirements and the axis of change
 
