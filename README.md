@@ -125,9 +125,27 @@ Grade my vending machine design out of 30.
 
 ## Testing the skill
 
-`evals/evals.json` holds 8 test prompts with checkable assertions. Two of them (cases 4 and 5) are
-**negative tests** — the correct behaviour is restraint and refusal, not more patterns. Run them
-with `skill-creator`, or by hand against a Claude with and without the skill loaded.
+`evals/evals.json` holds 8 prompts with checkable assertions. Two of them — the cases flagged
+`"negative": true` — are **restraint tests**, where the correct behaviour is a plain function and a
+refused pattern, not more machinery. They are the ones worth reading first: a pattern skill that
+cannot fail them is just a pattern generator.
+
+```bash
+pip install anthropic
+export ANTHROPIC_API_KEY=…          # or: ant auth login
+python3 tools/run_evals.py --compare
+```
+
+The runner sends `SKILL.md` as the system prompt and lets the model pull reference files through a
+`read_reference` tool — progressive disclosure as it actually behaves, rather than every reference
+pasted in — then grades each assertion with a second Claude call that must quote the span deciding
+it. `--compare` runs the same prompts with no skill loaded, which is the only number that says
+whether the skill is doing anything. `--dry-run` prints the plan without calling the API;
+`--cases 4,5` runs just the restraint tests. Results are written to `evals/results/`.
+
+**Not yet run.** The suite has never been executed end to end, so nothing here claims a measured
+score. It is not in CI because it costs real API tokens; `tools/validate.py` only checks that the
+suite is well-formed.
 
 ## Sources
 
