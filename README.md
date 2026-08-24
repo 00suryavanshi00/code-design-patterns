@@ -167,7 +167,7 @@ Two of his ideas are load-bearing here, not decorative:
 > "Each pattern describes a problem which occurs over and over again in our environment, and then
 > describes the core of the solution to that problem." — Alexander, *A Pattern Language*
 
-The [website](https://code-design-patterns.vercel.app) sets that debt out properly, typeset in his
+The [website](https://codedesignpatterns.dev) sets that debt out properly, typeset in his
 book's own conventions.
 
 ## Sources
