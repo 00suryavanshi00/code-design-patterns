@@ -3,7 +3,10 @@
 A Claude Skill that teaches Claude to **pick the right software design pattern, refuse the wrong
 one, and grade its own design before you ever see it.**
 
-**104 patterns · 21 anti-patterns · 30 canonical LLD problems · a 10-dimension design rubric.**
+**115 pattern entries · 21 anti-patterns · 30 canonical LLD problems · a 10-dimension design rubric.**
+
+<sub>Counted, not rounded: a pattern entry is one heading in the seven catalogue files, and
+`tools/validate.py` fails the build if this line stops matching the tree.</sub>
 
 🔗 **Website:** https://code-design-patterns-sanskars-projects-e7b2c5c4.vercel.app
 
@@ -45,7 +48,7 @@ skill/code-design-patterns/
     ├── 03-concurrency-patterns.md        Worker pools, pipelines, actors, CAS, backpressure
     ├── 04-distributed-resilience-…md     Breakers, sagas, outbox, sharding, locks, strangler fig
     ├── 05-frontend-patterns.md           Compound components, hooks, providers, error boundaries
-    ├── 06-antipatterns-and-smells.md     20 smells with signature + smallest first move
+    ├── 06-antipatterns-and-smells.md     21 smells with signature + smallest first move
     ├── 07-evaluation-rubric.md           10 dimensions scored /30, red flags, worked example
     ├── 08-lld-question-bank.md           30 problems: axis, patterns, trap, follow-up probe
     ├── 09-operability.md                 Test doubles, concurrency tests, RED/USE, cost per family
