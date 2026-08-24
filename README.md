@@ -97,7 +97,7 @@ mkdir -p ~/.claude/skills
 cp -r code-design-patterns/skill/code-design-patterns ~/.claude/skills/
 ```
 
-**Claude.ai / Cowork** — upload `code-design-patterns.skill` (or the skill folder) from Settings →
+**Claude.ai / Cowork** — download [`dist/code-design-patterns.skill`](https://github.com/00suryavanshi00/code-design-patterns/raw/main/dist/code-design-patterns.skill) and upload it from Settings →
 Capabilities → Skills.
 
 Nothing to build. No dependencies. It's Markdown.
