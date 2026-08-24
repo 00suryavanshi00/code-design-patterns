@@ -98,6 +98,25 @@ releases; synchronous call chains five services deep; shared database tables.
 **Diagnosis question:** can any one service be deployed on a Friday alone? If not, the boundaries
 are wrong — they were drawn along technical layers rather than along business capabilities.
 
+### Dual Writes
+**Signature:** a method that writes to the database and then publishes to a queue, calls another
+service, or updates a cache — two systems, two separate commits, no shared transaction.
+```python
+db.save(order)          # committed
+kafka.publish(event)    # crash here and the event never happens
+```
+**Cost:** the most common way teams silently corrupt data in a distributed system. There is no
+ordering that is safe: DB-then-publish loses the event on a crash; publish-then-DB emits an event
+for a write that then rolls back. It fails rarely enough to reach production and often enough to
+matter, and the damage is usually discovered weeks later as an inventory or balance discrepancy.
+**First move:** the transactional outbox — write the event to an `outbox` table inside the *same*
+transaction as the state change, and let a relay publish it. See
+`04-distributed-resilience-patterns.md`. Consumers then need to be idempotent, because the relay
+gives at-least-once delivery.
+**Watch for the disguised version:** `@Transactional` on a method that also makes an HTTP call.
+The annotation covers the database and nothing else, and it holds a transaction open across a
+network call while it fails to help.
+
 ### Chatty Interface / N+1
 **Signature:** a loop containing a network or database call.
 **First move:** batch it — one call taking a list. In ORMs, an explicit join or eager fetch.

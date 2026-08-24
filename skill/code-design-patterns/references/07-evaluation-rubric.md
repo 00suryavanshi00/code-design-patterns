@@ -82,8 +82,11 @@ If the problem is genuinely single-threaded, say so explicitly and score on that
 - **0** — Requires a live database or network to test anything; time and randomness called inline.
 - **1** — Testable with heavy mocking of concrete classes.
 - **2** — Dependencies injected; domain logic testable in isolation.
-- **3** — Seams are obvious, non-determinism (clock, UUID, random) injected, and the design names
-  which tests would exist and at what level.
+- **3** — Seams are obvious, non-determinism (clock, UUID, random) injected, the design names
+  which tests would exist and at what level, **and it says how each pattern introduced would be
+  observed in production** — one metric per breaker, queue, or cache, and what would page
+  someone. See `09-operability.md`. A component nobody can observe is not operable, however
+  testable it is.
 
 ### 9. Data modelling
 - **0** — Primitives everywhere; invalid states representable and reachable.
@@ -118,6 +121,8 @@ in machine-generated designs specifically.
 | Retry on a non-idempotent operation with no idempotency key | Duplicate charges and duplicate sends |
 | Every class name ends in `Manager`, `Service`, `Helper`, or `Handler` | Responsibilities were never actually identified |
 | More than five patterns named in one small design | Pattern-stuffing |
+| A circuit breaker, bounded queue, or cache with no stated metric | Unobservable in production; failure is undiagnosable |
+| Writing to a database and a queue as two separate commits | Dual writes — silent data loss |
 | A UML diagram whose classes never appear in the code, or vice versa | The design was not thought through as one artefact |
 
 ---

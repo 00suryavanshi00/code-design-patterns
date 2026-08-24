@@ -73,6 +73,7 @@ Forces map to pattern families:
 | A dependency may be slow or down | Circuit breaker, Timeout, Retry+jitter, Bulkhead | `references/04-distributed-resilience-patterns.md` |
 | A transaction spans services that cannot share a lock | Saga, Outbox, Idempotency key | `references/04-distributed-resilience-patterns.md` |
 | UI state and presentation are tangled | Container/presentational, Custom hook, Compound components | `references/05-frontend-patterns.md` |
+| A pattern is in the design but nobody could tell if it were broken | RED/USE signals, test seams | `references/09-operability.md` |
 
 Read only the reference file(s) the forces point to. Reading all of them wastes context.
 
@@ -105,10 +106,13 @@ Produce, in this order:
 5. **Pattern ledger** — a short table: pattern | force it resolves | alternative rejected.
 6. **Concurrency and failure** — what is shared, what lock or channel guards it, what happens
    when a dependency fails, what is idempotent.
-7. **Extension walkthrough** — take the axis of change from step 1 and show concretely what a
+7. **Operability** — a few lines: one metric per breaker, queue, or cache introduced, and what
+   would page someone. If a pattern cannot be observed, it cannot be run. See
+   `references/09-operability.md`.
+8. **Extension walkthrough** — take the axis of change from step 1 and show concretely what a
    developer edits to extend it. If the answer touches more than two files, the design is not
    as extensible as claimed.
-8. **Trade-offs** — what this design is bad at.
+9. **Trade-offs** — what this design is bad at.
 
 Use the user's language and stack. If none is given, prefer a typed language (Java, TypeScript,
 Go, Python with type hints) — untyped pseudocode hides exactly the interface decisions that
@@ -129,7 +133,7 @@ genuinely the right answer in production code:
 **Tier 1 — reach for these freely.** Strategy, Factory Method, Builder, Adapter, Decorator,
 Observer, State, Template Method, Command, Iterator, Facade, Composite, Proxy, Dependency
 Injection, Repository, Middleware/Interceptor chain, Worker pool, Circuit breaker, Retry with
-backoff, Cache-aside, Idempotency key.
+backoff and budget, Cache-aside, Idempotency key, Expand-contract migration.
 
 **Tier 2 — correct in specific situations, suspicious otherwise.** Abstract Factory, Chain of
 Responsibility, Visitor, Mediator, Bridge, Memento, Flyweight, Object Pool, Specification, Null
@@ -156,6 +160,7 @@ Read on demand, not upfront.
 | `references/06-antipatterns-and-smells.md` | God object, Anemic domain model, Pattern-stuffing, Premature abstraction, Leaky abstraction, Primitive obsession, Shotgun surgery, Circular dependency, Singleton abuse, Callback hell, Distributed monolith | Reviewing or refactoring existing code |
 | `references/07-evaluation-rubric.md` | 10-dimension scoring rubric with 0–3 anchors, plus red flags and a worked scored example | Before presenting any design; all review tasks |
 | `references/08-lld-question-bank.md` | 30 canonical LLD problems with required abstractions, legitimate pattern fits, trap answers, and follow-up probes | LLD/machine-coding practice, generating or grading design problems |
+| `references/09-operability.md` | How to test and observe each pattern family; RED and USE; what each pattern costs to run | Any design using a breaker, queue, pool or cache; "how would you test this?" |
 
 ## Calibration examples
 

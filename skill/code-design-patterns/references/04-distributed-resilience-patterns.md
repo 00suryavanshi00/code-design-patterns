@@ -51,7 +51,46 @@ Three rules, all mandatory:
 3. **Cap attempts and respect the deadline budget.** Retries at three stacked layers multiply:
    3 × 3 × 3 = 27 requests from one user action. Retry at *one* layer.
 
+4. **Bound retries with a budget, not just a count.** A per-attempt cap does nothing in a broad
+   outage, where every call fails and every caller retries its full allowance. Hold a token bucket
+   that refills at a small fraction of the success rate (AWS SDKs use ~5%): isolated retries pass
+   freely, but once the dependency is broadly down the bucket empties and retries collapse to a
+   trickle. This is the mechanism that makes "retry at one layer" enforceable rather than aspirational.
+
 Do not retry: 4xx client errors, validation failures, or anything that failed deterministically.
+
+**Retry budget (token bucket).** Attempt caps are per-call and do not bound *fleet-wide* retry
+load — during a partial outage every client is at its cap simultaneously, and the retries alone
+can exceed the dependency's capacity and prevent recovery. A budget fixes this: maintain a token
+bucket per dependency, spend a token per retry, refill at a small fraction of the success rate
+(5–10% is typical). Retries proceed freely while tokens last, then fall back to a fixed low rate.
+The property that matters: retry traffic is capped at a percentage of real traffic, so a
+dependency that is failing 100% of requests sees roughly 105% of normal load rather than 300%.
+The AWS SDKs adopted this in 2016 for exactly this reason.
+
+**Do not stack retries.** Retries at three layers multiply — 3 x 3 x 3 = 27 requests from one
+user action. Retry at *one* layer, and make it the one closest to the failure that still knows
+whether the operation is safe to repeat.
+
+## Hedged Requests
+
+**Force:** tail latency, not failure. p99 is ten times p50 because a small fraction of calls land on
+a slow replica — and waiting for the timeout burns the entire budget on a request that was never
+going to be fast.
+
+Send the request; if nothing has come back by roughly the p95 mark, send a **second** request to a
+different replica and take whichever answers first, cancelling the loser.
+
+**The distinction people miss:** a retry fires *after* a failure; a hedge fires *before* one, on a
+latency threshold, while the first request is still in flight. Retries fix availability; hedges fix
+tail latency. They are not substitutes.
+
+**The cost, which must be capped:** hedging duplicates work. Limit hedges to a small fraction of
+traffic (Google's practice is ≤5%) and count them against the same retry budget above. Uncapped
+hedging doubles fleet load exactly when the fleet is least able to absorb it.
+
+**Not this when:** the operation is not idempotent, or the backend is already saturated — under
+overload, hedging accelerates the collapse it was meant to hide.
 
 ## Timeouts and Deadline Budgets
 
@@ -83,6 +122,29 @@ personalised recommendations" is a better outcome than a 500.
 
 **The rule:** a fallback must not itself be able to fail in the same way. A fallback that calls
 another service has not removed the dependency.
+
+## Hedged Requests
+
+**Force:** p99 latency is dominated by unlucky requests — a slow node, a GC pause, a cold cache —
+not by a genuinely slow service. Waiting for the timeout to fire wastes the whole timeout budget.
+
+Send the request; if no response by a threshold (typically p95), send a **second** request to a
+different replica and take whichever returns first, cancelling the loser.
+
+**This is not a retry.** A retry fires *after* failure; a hedge fires *before* it, while the
+first request is still in flight. Retries fix errors, hedges fix latency.
+
+**Requirements, all mandatory:** the operation must be idempotent or idempotency-keyed, because
+both requests may execute. Hedge at p95, not p50 — hedging at the median doubles your traffic.
+Cap hedged traffic with a budget the same way as retries (5% is typical). And cancel the loser,
+or you have simply doubled load on a struggling backend.
+
+**In the wild:** the canonical treatment is Dean & Barroso's *The Tail at Scale*; gRPC supports
+hedging as a first-class policy alongside retries.
+
+**Not this when:** the operation is expensive, mutating without an idempotency key, or the
+service is uniformly slow rather than variably slow — hedging a saturated backend accelerates
+its collapse.
 
 ## Rate Limiting
 
@@ -154,6 +216,29 @@ separate relay polls or tails the CDC log and publishes to the broker, marking r
 Gives at-least-once delivery — so consumers must be idempotent (see idempotency key). The
 **Inbox** pattern is the consumer-side mirror: record processed message IDs to deduplicate.
 
+## Expand–Contract (Parallel Change)
+
+**Force:** a schema, message format, or API must change — but producers and consumers deploy
+independently, so there is no instant at which you can change both sides at once.
+
+Three phases, each independently deployable and each reversible on its own:
+
+1. **Expand** — add the new field, column, or endpoint *alongside* the old one. Write both; keep
+   reading the old. Nothing has broken yet because nothing depends on the new shape.
+2. **Migrate** — backfill existing rows, then move readers to the new shape one deployment at a
+   time. Both shapes remain valid throughout.
+3. **Contract** — stop writing the old shape, wait out any consumer still lagging, then delete it.
+
+**The phase teams skip is the third one.** A codebase full of half-finished expansions pays the
+dual-write cost forever and accumulates columns nobody can safely drop because nobody remembers who
+reads them. Put the contract step on the calendar when you start the expand step.
+
+**Related:** the same shape underlies safe database migrations (add nullable column → backfill →
+enforce constraint), API versioning, and the Strangler Fig for whole-service replacement.
+
+**Not this when:** you own both sides and can deploy them atomically — a single service and its own
+private table. Then just change it.
+
 ## Dead Letter Queue
 
 Messages that fail repeatedly get quarantined rather than blocking the queue or retrying forever.
@@ -208,6 +293,33 @@ Use a lease with a TTL in a consensus store (etcd, ZooKeeper, Consul) or a datab
 **The correctness trap:** a leader that pauses (GC, network partition) may still believe it is
 leader after its lease expires — two leaders briefly. Guard downstream writes with a monotonically
 increasing **fencing token** so stale-leader writes are rejected.
+
+## Expand-Contract (Parallel Change)
+
+**Force:** a schema or API must change, but producers and consumers deploy independently and
+there is no instant in which you can change both. A "coordinated release" is the admission that
+your services are a distributed monolith.
+
+Three phases, each independently deployable and rollback-safe:
+
+1. **Expand** — add the new field/column/endpoint alongside the old. Nothing reads it yet.
+   Writers populate *both*. This deploy is backward compatible, so it can roll back freely.
+2. **Migrate** — backfill existing rows, then move readers to the new field one service at a
+   time. Old and new coexist; this phase can last weeks and that is fine.
+3. **Contract** — once no reader touches the old field (verify with a metric, not with
+   confidence), stop writing it, then drop it.
+
+**The rule that makes it work:** never rename. A rename is a delete plus an add executed
+atomically, which is precisely the thing you cannot do across independently deployed services.
+Add, migrate, remove.
+
+**Where teams get it wrong:** skipping the verification before Contract. Instrument reads of the
+deprecated field and wait until that counter has been flat at zero for longer than your longest
+client's cache or release cycle. Also: a `NOT NULL` column added in the Expand phase breaks the
+old writer, so new columns are nullable or defaulted until Contract.
+
+**Related:** the **Strangler Fig** applies the same shape at system scale — route new
+functionality through a new module, migrate incrementally, delete the old path last.
 
 ---
 

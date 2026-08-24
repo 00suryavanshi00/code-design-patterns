@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>code-design-patterns — a Claude Skill</title>
-<meta name="description" content="A Claude Skill that teaches Claude to choose, apply and critique software design patterns. 101 patterns, 20 anti-patterns, a 10-dimension design rubric and 30 canonical LLD problems.">
+<meta name="description" content="A Claude Skill that teaches Claude to choose, apply and critique software design patterns. 104 patterns, 21 anti-patterns, a 10-dimension design rubric and 30 canonical LLD problems.">
 <meta name="theme-color" content="#141019">
 <meta property="og:title" content="code-design-patterns — a Claude Skill">
 <meta property="og:description" content="Every pattern must trace to a force in the requirements. If you cannot name the force, remove the pattern.">
@@ -489,10 +489,10 @@ code{font-family:var(--mono);font-size:.88em;color:var(--gold);letter-spacing:0}
   <div class="wrap">
     <div class="sec__head up">
       <div class="entry-head"><span class="num">01</span><span>What gets installed</span></div>
-      <h2 class="sec-title">One folder. Eight <em>reference files.</em> Nothing to build.</h2>
+      <h2 class="sec-title">One folder. Nine <em>reference files.</em> Nothing to build.</h2>
       <p class="lede">Claude loads <code>SKILL.md</code> when the work involves class design,
       refactoring or an LLD problem — then reads <b>only</b> the reference file that the problem's
-      forces point to. The other seven stay out of the context window.</p>
+      forces point to. The other eight stay out of the context window.</p>
     </div>
 
     <div class="mani up">
@@ -506,13 +506,14 @@ code{font-family:var(--mono);font-size:.88em;color:var(--gold);letter-spacing:0}
 <span class="p">    ├──</span> <span class="f">05-frontend-patterns</span>       <span class="c">compound components · hooks · boundaries</span>
 <span class="p">    ├──</span> <span class="f">06-antipatterns</span>            <span class="c">20 smells + first refactoring move</span>
 <span class="p">    ├──</span> <span class="f">07-evaluation-rubric</span>       <span class="c">10 dimensions, scored /30</span>
-<span class="p">    └──</span> <span class="f">08-lld-question-bank</span>       <span class="c">30 problems · traps · probes</span></div>
+<span class="p">    ├──</span> <span class="f">08-lld-question-bank</span>       <span class="c">30 problems · traps · probes</span>
+<span class="p">    └──</span> <span class="f">09-operability</span>             <span class="c">test · observe · cost · RED &amp; USE</span></div>
 
       <div class="panel stats">
-        <div class="stat"><span class="stat__n">101</span><span class="stat__l">Patterns</span></div>
-        <div class="stat"><span class="stat__n">20</span><span class="stat__l">Anti&#8209;patterns</span></div>
+        <div class="stat"><span class="stat__n">104</span><span class="stat__l">Patterns</span></div>
+        <div class="stat"><span class="stat__n">21</span><span class="stat__l">Anti&#8209;patterns</span></div>
         <div class="stat"><span class="stat__n">30</span><span class="stat__l">LLD problems</span></div>
-        <div class="stat"><span class="stat__n">2,015</span><span class="stat__l">Lines of skill</span></div>
+        <div class="stat"><span class="stat__n">2,270</span><span class="stat__l">Lines of skill</span></div>
       </div>
     </div>
   </div>
@@ -580,7 +581,7 @@ code{font-family:var(--mono);font-size:.88em;color:var(--gold);letter-spacing:0}
         <span class="chip">Iterator</span><span class="chip">Facade</span><span class="chip">Composite</span>
         <span class="chip">Proxy</span><span class="chip">Dependency Injection</span><span class="chip">Repository</span>
         <span class="chip">Middleware chain</span><span class="chip">Worker Pool</span><span class="chip">Circuit Breaker</span>
-        <span class="chip">Retry + jitter</span><span class="chip">Cache-aside</span><span class="chip">Idempotency Key</span>
+        <span class="chip">Retry + budget</span><span class="chip">Expand-contract</span><span class="chip">Cache-aside</span><span class="chip">Idempotency Key</span>
         <span class="chip">Value Object</span>
       </div>
     </div>
@@ -598,7 +599,7 @@ code{font-family:var(--mono);font-size:.88em;color:var(--gold);letter-spacing:0}
         <span class="chip">Specification</span><span class="chip">Null Object</span><span class="chip">Unit of Work</span>
         <span class="chip">CQRS</span><span class="chip">Event Sourcing</span><span class="chip">Saga</span>
         <span class="chip">Actor</span><span class="chip">Bulkhead</span><span class="chip">Outbox</span>
-        <span class="chip">Leader Election</span>
+        <span class="chip">Leader Election</span><span class="chip">Hedged Requests</span><span class="chip">Single-writer</span>
       </div>
     </div>
 
@@ -621,6 +622,7 @@ code{font-family:var(--mono);font-size:.88em;color:var(--gold);letter-spacing:0}
       <div class="panel ref up"><span class="ref__n">Ref 03</span><h3 class="ref__t">Concurrency</h3><p class="ref__d">Worker pools, pipelines, fan-out/fan-in, actors, structured concurrency, CAS, backpressure — plus the nine bugs reviewers actually look for.</p></div>
       <div class="panel ref up"><span class="ref__n">Ref 04</span><h3 class="ref__t">Distributed &amp; resilience</h3><p class="ref__d">Circuit breakers, deadline budgets, bulkheads, five rate-limiting algorithms, sagas and compensations, the outbox, cache stampede and avalanche.</p></div>
       <div class="panel ref up"><span class="ref__n">Ref 05</span><h3 class="ref__t">Frontend components</h3><p class="ref__d">Compound components, custom hooks, provider splitting, props getters, state reducers, error boundaries — and why eleven boolean props is a design bug.</p></div>
+      <div class="panel ref up"><span class="ref__n">Ref 09</span><h3 class="ref__t">Operating a pattern</h3><p class="ref__d">How to test and observe each family, RED and USE signals, and what each pattern costs to run. A circuit breaker you cannot observe is a mystery-outage generator.</p></div>
       <div class="panel ref up"><span class="ref__n">Ref 06</span><h3 class="ref__t">Anti-patterns</h3><p class="ref__d">Twenty smells with a detectable signature and the smallest first move. Including pattern-stuffing, which is the one this whole skill exists to prevent.</p></div>
     </div>
   </div>

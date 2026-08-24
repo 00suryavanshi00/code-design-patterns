@@ -3,7 +3,7 @@
 A Claude Skill that teaches Claude to **pick the right software design pattern, refuse the wrong
 one, and grade its own design before you ever see it.**
 
-**101 patterns · 20 anti-patterns · 30 canonical LLD problems · a 10-dimension design rubric.**
+**104 patterns · 21 anti-patterns · 30 canonical LLD problems · a 10-dimension design rubric.**
 
 🔗 **Website:** https://00suryavanshi00.github.io/code-design-patterns/
 
@@ -47,7 +47,8 @@ skill/code-design-patterns/
     ├── 05-frontend-patterns.md           Compound components, hooks, providers, error boundaries
     ├── 06-antipatterns-and-smells.md     20 smells with signature + smallest first move
     ├── 07-evaluation-rubric.md           10 dimensions scored /30, red flags, worked example
-    └── 08-lld-question-bank.md           30 problems: axis, patterns, trap, follow-up probe
+    ├── 08-lld-question-bank.md           30 problems: axis, patterns, trap, follow-up probe
+    └── 09-operability.md                 test/observe/cost per family; RED and USE
 ```
 
 Progressive disclosure: Claude loads `SKILL.md` when the task involves design, then reads **only**
@@ -60,10 +61,12 @@ how famous they are.
 
 - **Tier 1 — reach for freely.** Strategy, Factory Method, Builder, Adapter, Decorator, Observer,
   State, Template Method, Command, Iterator, Facade, Composite, Proxy, DI, Repository, Middleware
-  chain, Worker Pool, Circuit Breaker, Retry+jitter, Cache-aside, Idempotency Key, Value Object.
+  chain, Worker Pool, Circuit Breaker, Retry+jitter+budget, Cache-aside, Idempotency Key,
+  Value Object, Expand-contract migration.
 - **Tier 2 — right in specific situations.** Abstract Factory, Chain of Responsibility, Visitor,
   Mediator, Bridge, Memento, Flyweight, Object Pool, Specification, Null Object, Unit of Work,
-  CQRS, Event Sourcing, Saga, Actor, Bulkhead, Outbox, Leader Election.
+  CQRS, Event Sourcing, Saga, Actor, Bulkhead, Outbox, Leader Election, Hedged Requests,
+  Single-writer/sharding.
 - **Tier 3 — usually a smell.** Singleton, Prototype, Interpreter, Service Locator, Anemic Domain
   Model, hand-rolled double-checked locking.
 
@@ -79,7 +82,8 @@ modelling · Trade-off communication.
 
 Plus automatic red flags that cap the total at 20 — unjustified Singleton, single-implementation
 Strategy, check-then-act on a contended resource, unbounded queues, domain classes importing ORM
-types, remote calls without timeouts, retry without idempotency.
+types, remote calls without timeouts, retry without idempotency, dual writes, and any breaker,
+queue or cache with no stated metric.
 
 ## Install
 

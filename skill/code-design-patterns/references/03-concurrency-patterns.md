@@ -148,11 +148,26 @@ writers build a new version and swap an atomic reference.
 
 **Not this when:** writes are frequent or the structure is large — copying dominates.
 
-## Thread Confinement
+## Thread Confinement and the Single-Writer Principle
 
 Confine mutable state to one thread and it needs no lock. Stack-local variables, thread-locals,
 and "this struct is only touched by the event loop" are all confinement. Say so explicitly in a
 design — an unstated confinement assumption is the thing the next engineer breaks.
+
+The **single-writer principle** is the sharpened version: allow any number of readers, but let
+exactly *one* thread write a given piece of state. Contention disappears by construction, because
+contention requires two writers. Reads may then need only a memory barrier rather than a lock.
+
+This is why an actor owning its state, a Redis-style single-threaded event loop, and a Kafka
+partition with one consumer per group all outperform their lock-based equivalents at high
+concurrency — they are the same principle applied at different scales. Scaling happens by
+*sharding* the state so each shard has its own writer, not by adding writers to one shard.
+
+**Mechanical sympathy:** at the hardware level, two cores writing to the same cache line contend
+even when the variables are logically unrelated — **false sharing**. The LMAX Disruptor gets its
+throughput from taking this seriously: a pre-allocated ring buffer, cache-line padding around
+each cursor, single-writer discipline, and batching that falls out naturally under load. Worth
+knowing exists; worth reaching for only when a bounded queue has been measured as the bottleneck.
 
 ## Read/Write Lock
 
