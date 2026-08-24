@@ -4,8 +4,9 @@ Use this twice: to self-check a design before presenting it, and as the structur
 someone else's.
 
 Score each dimension 0–3. **Total 30.** A design scoring below 20 should be revised before it is
-shown. Any single 0 is a blocker regardless of the total — a design that is beautifully factored
-but silently loses data under concurrency is not a good design.
+shown. Two things override the total: any single **0** is a blocker, and any **red flag** below
+forces a revision whatever the score — a design that is beautifully factored but silently loses
+data under concurrency is not a good design.
 
 ---
 
@@ -106,8 +107,10 @@ If the problem is genuinely single-threaded, say so explicitly and score on that
 
 ## Automatic red flags
 
-Any of these caps the total at 20 regardless of other scores. They are the recurring failure modes
-in machine-generated designs specifically.
+Any of these caps the total at **19** *and* forces a revision regardless of the other scores — the
+cap is one point below the revision threshold precisely so that a red-flagged design can never be
+presented on the strength of its other dimensions. They are the recurring failure modes in
+machine-generated designs specifically.
 
 | Red flag | Why |
 |---|---|
