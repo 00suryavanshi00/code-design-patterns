@@ -5,7 +5,7 @@ one, and grade its own design before you ever see it.**
 
 **104 patterns · 21 anti-patterns · 30 canonical LLD problems · a 10-dimension design rubric.**
 
-🔗 **Website:** https://00suryavanshi00.github.io/code-design-patterns/
+🔗 **Website:** https://code-design-patterns-sanskars-projects-e7b2c5c4.vercel.app
 
 ---
 
@@ -142,18 +142,10 @@ Useful additions, roughly in order of value:
    without those three cannot be graded meaningfully.
 4. Rubric anchors that are more objectively checkable.
 
-## Deploy the site yourself
+## Website
 
-The site is one dependency-free `index.html` at the repo root.
-
-- **GitHub Pages** — Settings → Pages → Source: `main` / root. Live in ~60 seconds.
-- **Vercel** — import the repo, framework preset "Other", no build command, output directory `.`.
-
-Before publishing, replace the placeholder in `index.html` and this README:
-
-```bash
-grep -rl '00suryavanshi00' . | xargs sed -i 's/00suryavanshi00/your-actual-username/g'
-```
+The landing page lives in a separate private repo — this one is the skill and nothing else, so a
+clone contains only what you actually install.
 
 ## License
 
