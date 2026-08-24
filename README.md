@@ -8,7 +8,7 @@ one, and grade its own design before you ever see it.**
 <sub>Counted, not rounded: a pattern entry is one heading in the seven catalogue files, and
 `tools/validate.py` fails the build if this line stops matching the tree.</sub>
 
-🔗 **Website:** https://code-design-patterns-sanskars-projects-e7b2c5c4.vercel.app
+🔗 **Website:** https://code-design-patterns.vercel.app
 
 ---
 
@@ -146,6 +146,29 @@ whether the skill is doing anything. `--dry-run` prints the plan without calling
 **Not yet run.** The suite has never been executed end to end, so nothing here claims a measured
 score. It is not in CI because it costs real API tokens; `tools/validate.py` only checks that the
 suite is well-formed.
+
+## Lineage
+
+The word "pattern" was not coined by the Gang of Four. They took it from **Christopher Alexander**,
+whose *A Pattern Language* (1977) described 253 patterns for building towns and buildings — each one
+a named force resolved by a form, written so that ordinary people, not specialists, could use it.
+
+Two of his ideas are load-bearing here, not decorative:
+
+- **He rated his own patterns.** Two asterisks where he believed the pattern was a true invariant of
+  the problem, one where he was less certain, none where he suspected a better solution existed.
+  This skill's three tiers *are* those marks — **★★ / ★ / ·** — which is why Singleton sits at the
+  bottom and Strategy at the top. A catalogue that presents all 23 GoF patterns as equals is a
+  catalogue Alexander would not have shipped.
+- **Every pattern begins with a conflict of forces, and the pattern is the resolution.** His entries
+  state the forces, then turn on the word **"Therefore:"**. That is the whole bar this skill
+  enforces — *if you cannot name the force, remove the pattern* — restated for software.
+
+> "Each pattern describes a problem which occurs over and over again in our environment, and then
+> describes the core of the solution to that problem." — Alexander, *A Pattern Language*
+
+The [website](https://code-design-patterns.vercel.app) sets that debt out properly, typeset in his
+book's own conventions.
 
 ## Sources
 

@@ -166,20 +166,24 @@ rather than an exhaustive list.
 ## Pattern tiers
 
 Not all patterns earn their place equally. When choosing, weight by how often the pattern is
-genuinely the right answer in production code:
+genuinely the right answer in production code. The three tiers are **★★ / ★ / ·** — Christopher
+Alexander's own confidence marks from *A Pattern Language* (1977), the book the Gang of Four took
+the word "pattern" from. He rated each of his 253 patterns two asterisks where he believed it was a
+true invariant, one where he was less sure, and none where he suspected a better solution existed.
+That is a rating of confidence, not of fame, and it is the right axis here too:
 
-**Tier 1 — reach for these freely.** Strategy, Factory Method, Builder, Adapter, Decorator,
+**Tier 1 · ★★ — reach for these freely.** Strategy, Factory Method, Builder, Adapter, Decorator,
 Observer, State, Template Method, Command, Iterator, Facade, Composite, Proxy, Dependency
 Injection, Repository, Middleware/Interceptor chain, Worker pool, Circuit breaker, Retry with
 backoff and budget, Cache-aside, Idempotency key, Optimistic locking, Unique-constraint invariants,
 Expand-contract migration.
 
-**Tier 2 — correct in specific situations, suspicious otherwise.** Abstract Factory, Chain of
+**Tier 2 · ★ — correct in specific situations, suspicious otherwise.** Abstract Factory, Chain of
 Responsibility, Visitor, Mediator, Bridge, Memento, Flyweight, Object Pool, Specification, Null
 Object, Unit of Work, CQRS, Event sourcing, Saga, Actor, Bulkhead, Pessimistic row locking, Soft
 delete.
 
-**Tier 3 — usually a smell.** Singleton (a global with extra steps; it destroys testability and
+**Tier 3 · unmarked — usually a smell.** Singleton (a global with extra steps; it destroys testability and
 hides coupling — prefer one instance injected at composition root), Prototype (most languages
 have a copy idiom), Interpreter (reach for a parser generator or an existing expression library),
 Service Locator (hides dependencies where DI would expose them), Anemic Domain Model.
