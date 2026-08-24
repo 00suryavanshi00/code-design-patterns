@@ -43,6 +43,94 @@ seconds. Percentiles or nothing.
 **Rate, not count.** "500 errors" is meaningless without a denominator. 500 out of 50,000 is a
 Tuesday; 500 out of 600 is an outage.
 
+## Designing for tests
+
+The rubric grades testability; this is what to actually do about it. A design "has seams" only if it
+says what goes in them.
+
+### The five doubles, and which one to reach for
+
+| Double | What it is | Reach for it when |
+|---|---|---|
+| **Dummy** | Filler to satisfy a signature; never called | An unused constructor argument |
+| **Stub** | Returns canned answers | The collaborator's *output* is the input to your test |
+| **Fake** | A real, working, simplified implementation | The collaborator has behaviour worth preserving — repositories, clocks, caches |
+| **Spy** | Records what it was called with | You need to assert an effect that has no return value |
+| **Mock** | Pre-programmed with expectations; fails the test itself | Rarely. Interaction *is* the thing under test — a retry policy calling exactly three times |
+
+**Default to a hand-written fake for a port.** An `InMemoryOrderRepository` — a `Map` plus the
+interface — is thirty lines, runs in microseconds, and preserves real behaviour: what you saved is
+what you find. A mock framework's `when(repo.findById(id)).thenReturn(order)` encodes *your current
+belief* about the call sequence, so every refactor that changes call order breaks tests without any
+behaviour changing. Mock-heavy suites are how a codebase gets tests that are expensive to maintain
+and prove nothing.
+
+**Do not mock what you do not own.** A mocked AWS SDK asserts your idea of the SDK, not the SDK.
+Wrap the third party in your own narrow adapter (`01-gof-catalog.md`), fake the adapter, and cover
+the real thing in one integration test.
+
+### Two implementations of one port need one test suite
+
+The moment there is an in-memory fake *and* a Postgres implementation, they can disagree — and every
+bug that hides behind that disagreement is invisible until production. Write the suite against the
+interface and run it against both: same tests, two fixtures. Anything the fake cannot pass (real
+constraint violations, isolation behaviour from `10-persistence-patterns.md`) is exactly the list of
+things the fake does not protect you from, which is worth knowing explicitly.
+
+The cross-service version of this is consumer-driven contract testing — see
+`11-api-contract-patterns.md`.
+
+### Characterization tests come before a refactor, not after
+
+Legacy code with no tests cannot be refactored safely, and cannot be tested without being refactored.
+The way out is to pin current behaviour first — including the behaviour that looks wrong. Write tests
+that assert what the code *does*, run the refactor, and any test that breaks is a change in
+behaviour you did not intend. Then fix the bug as its own commit, with its own test, so the diff
+says which change was structural and which was a fix.
+
+### Make the non-deterministic injectable
+
+Every one of these belongs behind an interface passed into the constructor, and every one of them
+appears in the rubric's red flags when it does not:
+
+- **Time** — inject a `Clock`. Then a 30-day expiry test advances the clock by 30 days instead of
+  sleeping. Tests that call `sleep` are slow *and* flaky; both problems have the same cause.
+- **Randomness and ids** — inject the generator. A seeded generator makes a failure reproducible.
+- **The environment** — config and feature flags read through an interface, not `os.getenv` at the
+  point of use.
+
+### Testing the concurrency claims
+
+A design that claims "this is safe under concurrent access" owes a test that would fail if it were
+not — and `Thread.sleep(100)` is not that test.
+
+- **Drive the state machine directly.** Most concurrency bugs are reachable as an ordering, not a
+  race: call the transitions in the bad order and assert the invariant holds.
+- **Force the interleaving.** A latch or barrier releasing N threads at the same instant, run a few
+  thousand times, catches check-then-act reliably; a stress test that just runs "a lot" catches it by
+  luck.
+- **Assert the invariant, not the outcome.** After 1,000 concurrent claims of 100 seats, exactly 100
+  succeeded and no seat has two holders. That assertion is meaningful whatever the schedule was.
+- **Use the tools.** Go's `-race`, Java's jcstress, `ThreadSanitizer`. They find what a passing test
+  under one schedule cannot.
+- **Where state is stored, test it against the store.** In-process locks and database isolation are
+  different mechanisms; a fake repository cannot exhibit a lost update. Run the concurrency test
+  against the real engine.
+
+### State the levels
+
+A design that says "unit tested" has said nothing. Name what exists at each level and why:
+
+| Level | Covers | Should be |
+|---|---|---|
+| Unit | Domain logic, state machines, pure calculation | The majority; milliseconds; no I/O |
+| Integration | One adapter against the real thing — repository against a real database, client against a stub server | Enough to prove the adapter and its constraints |
+| Contract | The promise between two deployables | One per consumer, run in both builds |
+| End-to-end | The two or three flows that lose money if broken | Few, and owned by someone |
+
+If a design's most interesting logic can only be reached through the top row, that is a design
+finding, not a testing finding: the seams are in the wrong place.
+
 ## Per-family operability
 
 ### Behavioural patterns (Strategy, State, Command, Observer)

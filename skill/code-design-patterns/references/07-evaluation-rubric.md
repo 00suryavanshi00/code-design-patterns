@@ -84,10 +84,11 @@ If the problem is genuinely single-threaded, say so explicitly and score on that
 - **1** — Testable with heavy mocking of concrete classes.
 - **2** — Dependencies injected; domain logic testable in isolation.
 - **3** — Seams are obvious, non-determinism (clock, UUID, random) injected, the design names
-  which tests would exist and at what level, **and it says how each pattern introduced would be
-  observed in production** — one metric per breaker, queue, or cache, and what would page
-  someone. See `09-operability.md`. A component nobody can observe is not operable, however
-  testable it is.
+  which tests would exist and at what level — and what goes in the seams: a fake rather than a
+  mock for a port, a test that would actually fail if the concurrency claim were false — **and it
+  says how each pattern introduced would be observed in production**: one metric per breaker,
+  queue, or cache, and what would page someone. See `09-operability.md`. A component nobody can
+  observe is not operable, however testable it is.
 
 ### 9. Data modelling
 - **0** — Primitives everywhere; invalid states representable and reachable.

@@ -48,7 +48,7 @@ skill/code-design-patterns/
     ├── 06-antipatterns-and-smells.md     20 smells with signature + smallest first move
     ├── 07-evaluation-rubric.md           10 dimensions scored /30, red flags, worked example
     ├── 08-lld-question-bank.md           30 problems: axis, patterns, trap, follow-up probe
-    ├── 09-operability.md                 test/observe/cost per family; RED and USE
+    ├── 09-operability.md                 Test doubles, concurrency tests, RED/USE, cost per family
     ├── 10-persistence-patterns.md        Locking, isolation levels, constraints, tenancy, soft delete
     └── 11-api-contract-patterns.md       Idempotent HTTP, pagination, evolution, versioning, webhooks
 ```
