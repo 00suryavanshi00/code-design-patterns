@@ -8,7 +8,7 @@ one, and grade its own design before you ever see it.**
 <sub>Counted, not rounded: a pattern entry is one heading in the seven catalogue files, and
 `tools/validate.py` fails the build if this line stops matching the tree.</sub>
 
-🔗 **Website:** https://code-design-patterns.vercel.app
+🔗 **Website:** https://codedesignpatterns.dev
 
 ---
 
@@ -189,6 +189,11 @@ Useful additions, roughly in order of value:
 4. Rubric anchors that are more objectively checkable.
 
 ## Website
+
+**[codedesignpatterns.dev](https://codedesignpatterns.dev)** — the pattern tiers, the rubric, the
+reference map and an FAQ. A machine-readable summary lives at
+[`/llms.txt`](https://codedesignpatterns.dev/llms.txt), and the full reference — rubric, red flags,
+all 30 LLD problems — at [`/llms-full.txt`](https://codedesignpatterns.dev/llms-full.txt).
 
 The landing page lives in a separate private repo — this one is the skill and nothing else, so a
 clone contains only what you actually install.
