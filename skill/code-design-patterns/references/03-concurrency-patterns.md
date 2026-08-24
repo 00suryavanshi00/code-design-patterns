@@ -11,7 +11,7 @@ a lock" is not an answer — *which* lock, around *what*, and what does it cost.
   [Fan-out / Fan-in](#fan-out--fan-in)
 - [Actor](#actor-model) · [Reactor / event loop](#reactor--event-loop) ·
   [Futures & Promises](#futures--promises) · [Structured concurrency](#structured-concurrency)
-- [Immutability & CoW](#immutability-and-copy-on-write) · [Thread confinement](#thread-confinement) ·
+- [Immutability & CoW](#immutability-and-copy-on-write) · [Thread confinement & single writer](#thread-confinement-and-the-single-writer-principle) ·
   [Read-write lock](#readwrite-lock) · [Double-checked locking](#double-checked-locking) ·
   [Optimistic concurrency](#optimistic-concurrency-and-cas)
 - [Backpressure](#backpressure) · [Graceful shutdown](#graceful-shutdown) ·

@@ -1,0 +1,26 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Rebuild the .skill bundle
+        run: python3 tools/build.py
+
+      - name: Fail if the committed bundle was stale
+        run: git diff --exit-code -- dist/
+
+      - name: Validate frontmatter, counts, links and evals
+        run: python3 tools/validate.py
