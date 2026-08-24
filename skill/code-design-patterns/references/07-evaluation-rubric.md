@@ -127,6 +127,8 @@ machine-generated designs specifically.
 | More than five patterns named in one small design | Pattern-stuffing |
 | A circuit breaker, bounded queue, or cache with no stated metric | Unobservable in production; failure is undiagnosable |
 | Writing to a database and a queue as two separate commits | Dual writes — silent data loss |
+| Authorization enforced only in the presentation layer, or copy-pasted per endpoint | Hiding a button does not close an endpoint; the handler that forgets is the breach |
+| A secret, token, or raw credential held on a domain object | It will be logged, cached, or serialised into an error report |
 | A UML diagram whose classes never appear in the code, or vice versa | The design was not thought through as one artefact |
 
 ---

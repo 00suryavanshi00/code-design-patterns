@@ -77,6 +77,7 @@ Forces map to pattern families:
 | The contended state lives in a database, not in this process | Persistence-layer concurrency — a mutex protects nothing across instances | `references/10-persistence-patterns.md` |
 | A boundary is public and its consumers deploy on their own schedule | Compatible evolution, versioning, DTOs at the edge | `references/11-api-contract-patterns.md` |
 | A client may retry a request the network already delivered | Idempotent HTTP semantics, `Idempotency-Key`, `If-Match` | `references/11-api-contract-patterns.md` |
+| The same rule must hold everywhere and nobody may forget it (authorization, tenancy, validation) | Policy object + one enforcement layer, structural rather than remembered | `references/02-modern-application-patterns.md` |
 | UI state and presentation are tangled | Container/presentational, Custom hook, Compound components | `references/05-frontend-patterns.md` |
 | A pattern is in the design but nobody could tell if it were broken | RED/USE signals, test seams | `references/09-operability.md` |
 

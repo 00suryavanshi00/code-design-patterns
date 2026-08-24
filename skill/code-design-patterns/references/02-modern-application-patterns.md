@@ -13,7 +13,7 @@ which the 1994 book predates or barely touches.
 - [CQRS](#cqrs) · [Event Sourcing](#event-sourcing)
 - [Result types](#result-and-error-types) · [Functional Options](#functional-options) ·
   [Plugin / Extension point](#plugin--extension-point) · [Feature flags](#feature-flags) ·
-  [Middleware](#middleware--interceptor-chain)
+  [Middleware](#middleware--interceptor-chain) · [Where security lives](#where-security-lives)
 
 ---
 
@@ -235,6 +235,36 @@ cannot take the host down, and define ordering when multiple plugins apply.
 Treat the flag check as a Strategy selection, keep flag logic out of the domain, and — the part
 teams skip — schedule flag removal. Stale flags are combinatorial debt: 10 flags is 1024
 theoretical code paths, none of them tested.
+
+## Where security lives
+
+Not a security course — a placement question, and placement is a design decision the rest of this
+file's patterns already answer for everything else.
+
+**Authorization belongs in one layer, and it is not the UI.** Hiding a button is a usability
+feature; the endpoint behind it is still open. Copy-pasting `if (user.role != ADMIN)` into forty
+handlers is the same failure as a `switch` on vehicle type — the rule is smeared across every place
+that must remember it, and the one that forgets is the breach. Put the decision in a policy object
+the domain calls (`can(user, :approve, invoice)`) and enforce it in one middleware/interceptor chain
+or one authorization service. Then "who can approve an invoice" has exactly one answer, and it is
+testable in isolation.
+
+**Object-level checks are the ones that get skipped.** Role checks are easy and mostly present;
+"this invoice belongs to this tenant" is the check that is missing, and it is the most common serious
+API vulnerability there is. Where multi-tenancy is involved, make it structural rather than
+remembered — see the tenancy section of `10-persistence-patterns.md`.
+
+**Validate at the trust boundary, then stop.** Parse untrusted input into domain types once, at the
+edge, and let the type system carry the guarantee inward — `EmailAddress`, not `String` checked in
+four places. Make illegal states unrepresentable applies precisely here.
+
+**Secrets are infrastructure, not domain state.** A domain object holding an API key or a raw
+password serialises it into logs, caches, test fixtures and error reports the moment anything prints
+it. Keep credentials behind the adapter that uses them, and give sensitive value objects a
+`toString`/serializer that redacts.
+
+**In the wild:** Rails' Pundit/CanCanCan policies, Casbin, OPA/Rego, and Postgres row-level
+security are all the same idea — the authorization rule as a first-class object, one place, testable.
 
 ## Middleware / Interceptor Chain
 
