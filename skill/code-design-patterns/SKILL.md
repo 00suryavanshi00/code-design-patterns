@@ -72,6 +72,9 @@ Forces map to pattern families:
 | Bounded parallelism over a stream of work | Worker pool, Pipeline, Fan-out/fan-in | `references/03-concurrency-patterns.md` |
 | A dependency may be slow or down | Circuit breaker, Timeout, Retry+jitter, Bulkhead | `references/04-distributed-resilience-patterns.md` |
 | A transaction spans services that cannot share a lock | Saga, Outbox, Idempotency key | `references/04-distributed-resilience-patterns.md` |
+| Two writers may update the same stored row | Optimistic version column, `SELECT … FOR UPDATE`, single-statement conditional update | `references/10-persistence-patterns.md` |
+| "There can only be one" — one booking, one signup, one charge | Unique constraint, idempotency key, conditional write | `references/10-persistence-patterns.md` |
+| The contended state lives in a database, not in this process | Persistence-layer concurrency — a mutex protects nothing across instances | `references/10-persistence-patterns.md` |
 | UI state and presentation are tangled | Container/presentational, Custom hook, Compound components | `references/05-frontend-patterns.md` |
 | A pattern is in the design but nobody could tell if it were broken | RED/USE signals, test seams | `references/09-operability.md` |
 
@@ -105,7 +108,10 @@ Produce, in this order:
    showing how the objects collaborate.
 5. **Pattern ledger** — a short table: pattern | force it resolves | alternative rejected.
 6. **Concurrency and failure** — what is shared, what lock or channel guards it, what happens
-   when a dependency fails, what is idempotent.
+   when a dependency fails, what is idempotent. If the shared state is *stored* rather than
+   in-process, name the database-level mechanism — version column, `FOR UPDATE`, unique constraint,
+   conditional write — because a mutex in one instance does not constrain another
+   (`references/10-persistence-patterns.md`).
 7. **Operability** — a few lines: one metric per breaker, queue, or cache introduced, and what
    would page someone. If a pattern cannot be observed, it cannot be run. See
    `references/09-operability.md`.
@@ -133,11 +139,13 @@ genuinely the right answer in production code:
 **Tier 1 — reach for these freely.** Strategy, Factory Method, Builder, Adapter, Decorator,
 Observer, State, Template Method, Command, Iterator, Facade, Composite, Proxy, Dependency
 Injection, Repository, Middleware/Interceptor chain, Worker pool, Circuit breaker, Retry with
-backoff and budget, Cache-aside, Idempotency key, Expand-contract migration.
+backoff and budget, Cache-aside, Idempotency key, Optimistic locking, Unique-constraint invariants,
+Expand-contract migration.
 
 **Tier 2 — correct in specific situations, suspicious otherwise.** Abstract Factory, Chain of
 Responsibility, Visitor, Mediator, Bridge, Memento, Flyweight, Object Pool, Specification, Null
-Object, Unit of Work, CQRS, Event sourcing, Saga, Actor, Bulkhead.
+Object, Unit of Work, CQRS, Event sourcing, Saga, Actor, Bulkhead, Pessimistic row locking, Soft
+delete.
 
 **Tier 3 — usually a smell.** Singleton (a global with extra steps; it destroys testability and
 hides coupling — prefer one instance injected at composition root), Prototype (most languages
@@ -161,6 +169,7 @@ Read on demand, not upfront.
 | `references/07-evaluation-rubric.md` | 10-dimension scoring rubric with 0–3 anchors, plus red flags and a worked scored example | Before presenting any design; all review tasks |
 | `references/08-lld-question-bank.md` | 30 canonical LLD problems with required abstractions, legitimate pattern fits, trap answers, and follow-up probes | LLD/machine-coding practice, generating or grading design problems |
 | `references/09-operability.md` | How to test and observe each pattern family; RED and USE; what each pattern costs to run | Any design using a breaker, queue, pool or cache; "how would you test this?" |
+| `references/10-persistence-patterns.md` | Optimistic vs. pessimistic locking, unique constraints and conditional writes, isolation levels and write skew, aggregates as transaction boundaries, idempotent writes, soft delete, multi-tenant isolation, read models, schema change | Any design where the contended state is in a database; "two users book the last seat" |
 
 ## Calibration examples
 
