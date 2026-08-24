@@ -1,6 +1,6 @@
 {
   "skill_name": "code-design-patterns",
-  "notes": "Assertions are written to be objectively checkable by a grader reading the output. Cases 4 and 6 are negative tests: the correct behaviour is restraint, not more patterns.",
+  "notes": "Assertions are written to be objectively checkable by a grader reading the output. Cases 4 and 5 are negative tests: the correct behaviour is restraint — a simple function and a refused pattern — not more patterns.",
   "evals": [
     {
       "id": 1,
