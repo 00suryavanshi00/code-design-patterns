@@ -49,7 +49,8 @@ skill/code-design-patterns/
     ├── 07-evaluation-rubric.md           10 dimensions scored /30, red flags, worked example
     ├── 08-lld-question-bank.md           30 problems: axis, patterns, trap, follow-up probe
     ├── 09-operability.md                 test/observe/cost per family; RED and USE
-    └── 10-persistence-patterns.md        Locking, isolation levels, constraints, tenancy, soft delete
+    ├── 10-persistence-patterns.md        Locking, isolation levels, constraints, tenancy, soft delete
+    └── 11-api-contract-patterns.md       Idempotent HTTP, pagination, evolution, versioning, webhooks
 ```
 
 Progressive disclosure: Claude loads `SKILL.md` when the task involves design, then reads **only**

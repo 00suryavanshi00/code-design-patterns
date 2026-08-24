@@ -75,6 +75,8 @@ Forces map to pattern families:
 | Two writers may update the same stored row | Optimistic version column, `SELECT … FOR UPDATE`, single-statement conditional update | `references/10-persistence-patterns.md` |
 | "There can only be one" — one booking, one signup, one charge | Unique constraint, idempotency key, conditional write | `references/10-persistence-patterns.md` |
 | The contended state lives in a database, not in this process | Persistence-layer concurrency — a mutex protects nothing across instances | `references/10-persistence-patterns.md` |
+| A boundary is public and its consumers deploy on their own schedule | Compatible evolution, versioning, DTOs at the edge | `references/11-api-contract-patterns.md` |
+| A client may retry a request the network already delivered | Idempotent HTTP semantics, `Idempotency-Key`, `If-Match` | `references/11-api-contract-patterns.md` |
 | UI state and presentation are tangled | Container/presentational, Custom hook, Compound components | `references/05-frontend-patterns.md` |
 | A pattern is in the design but nobody could tell if it were broken | RED/USE signals, test seams | `references/09-operability.md` |
 
@@ -170,6 +172,7 @@ Read on demand, not upfront.
 | `references/08-lld-question-bank.md` | 30 canonical LLD problems with required abstractions, legitimate pattern fits, trap answers, and follow-up probes | LLD/machine-coding practice, generating or grading design problems |
 | `references/09-operability.md` | How to test and observe each pattern family; RED and USE; what each pattern costs to run | Any design using a breaker, queue, pool or cache; "how would you test this?" |
 | `references/10-persistence-patterns.md` | Optimistic vs. pessimistic locking, unique constraints and conditional writes, isolation levels and write skew, aggregates as transaction boundaries, idempotent writes, soft delete, multi-tenant isolation, read models, schema change | Any design where the contended state is in a database; "two users book the last seat" |
+| `references/11-api-contract-patterns.md` | Error contracts, idempotent HTTP semantics, pagination, filtering, compatible evolution, versioning, deprecation, webhooks, contract tests | Designing or changing a public endpoint, an SDK surface, or a webhook |
 
 ## Calibration examples
 
