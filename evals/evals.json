@@ -1,0 +1,121 @@
+{
+  "skill_name": "code-design-patterns",
+  "notes": "Assertions are written to be objectively checkable by a grader reading the output. Cases 4 and 6 are negative tests: the correct behaviour is restraint, not more patterns.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "parking-lot-classic-lld",
+      "prompt": "Design a parking lot system. It has multiple floors, different vehicle types, and charges by the hour. Give me the class design in Java.",
+      "expected_output": "Entity model (Lot/Floor/Spot/Vehicle/Ticket), a strategy interface on allocation and a separate one on pricing, an explicit concurrency answer for spot claiming, a pattern ledger with rejected alternatives, and an extension walkthrough.",
+      "assertions": [
+        "States requirements and assumptions before the design",
+        "Names an explicit axis of change",
+        "Separates allocation policy from pricing policy as distinct abstractions",
+        "Addresses the two-entrances race on claiming a spot with a specific atomic mechanism (lock, CAS, or DB constraint)",
+        "Does NOT introduce a Singleton manager class",
+        "Does NOT introduce a vehicle factory producing subclasses that differ only by an enum",
+        "Includes a pattern ledger naming at least one rejected alternative",
+        "Models money as a value object rather than a float or double"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "review-god-class",
+      "prompt": "Can you review this? It's our OrderService. It's about 400 lines. It validates the order, calculates tax and discounts, calls Stripe, writes to Postgres with raw SQL, sends a confirmation email, and updates our analytics. All of it is in one class and everything is static so we can call it from anywhere.",
+      "expected_output": "A rubric-structured review that leads with the two highest-leverage problems and gives a concrete first refactoring move, rather than an exhaustive list.",
+      "assertions": [
+        "Leads with a verdict, not a list",
+        "Identifies at most two problems as the primary ones",
+        "Gives a concrete first move for each primary problem",
+        "Identifies the static methods as blocking testability and dependency injection",
+        "Does not propose a full rewrite as the first step",
+        "Names something the existing design does well or is defensible about"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "resilience-composition",
+      "prompt": "Our checkout service calls a payment provider that has been flaky lately. Sometimes it times out and we're not sure whether the charge went through. What should the call path look like?",
+      "expected_output": "Composed resilience: timeout, retry with jitter gated on idempotency, circuit breaker, bulkhead, fallback, with the unknown-outcome case handled explicitly.",
+      "assertions": [
+        "Explicitly addresses the unknown-outcome case (timeout with indeterminate result)",
+        "Recommends an idempotency key as the prerequisite for retrying",
+        "Specifies exponential backoff with jitter rather than plain retry",
+        "Includes a timeout on the remote call",
+        "Describes circuit breaker states and what counts as a failure",
+        "States what the user sees when the circuit is open"
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "restraint-negative-test",
+      "prompt": "I have a function that formats a date string three different ways depending on the user's locale. What design pattern should I use here?",
+      "expected_output": "Restraint: a map or a simple function is the answer; a Strategy class hierarchy would be overkill. The skill should say so directly.",
+      "assertions": [
+        "Recommends a simple function or lookup map rather than a class hierarchy",
+        "Explicitly says a formal pattern is not warranted at this size",
+        "Names the condition under which a pattern would become warranted",
+        "Does not produce more than one interface"
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "wrong-axis-visitor",
+      "prompt": "I'm building a plugin system where third parties will add new node types to our workflow engine over time. I read about the Visitor pattern — should I use it for processing the nodes?",
+      "expected_output": "No, with the axis-of-change reasoning: Visitor makes new operations cheap and new types expensive, which is backwards when types are the thing that churns.",
+      "assertions": [
+        "Answers no",
+        "Explains the operations-vs-types trade-off that makes Visitor wrong here",
+        "Offers a concrete alternative suited to type extensibility (polymorphic interface / plugin registration)",
+        "Notes the condition under which Visitor would have been right"
+      ],
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "concurrency-correctness",
+      "prompt": "Write a thread-safe in-memory LRU cache with a max size, in Go. Explain the design.",
+      "expected_output": "Map plus doubly-linked list, correct O(1) claims, an explicit statement of what the mutex guards and why the get path also mutates, and a note on sharding for contention.",
+      "assertions": [
+        "Identifies that Get mutates recency and therefore needs write-level protection",
+        "States explicitly what the lock guards",
+        "Maintains the map/list invariant on eviction",
+        "Does not hold the lock across any I/O or callback",
+        "Discusses sharding or an alternative when contention is high",
+        "Correctly justifies the O(1) claim"
+      ],
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "frontend-component-api",
+      "prompt": "Our Modal component in the design system now has 11 boolean props (showHeader, showFooter, isLarge, hasCloseButton, ...) and nobody can remember which combinations work. How should we restructure it?",
+      "expected_output": "Composition over configuration, likely compound components, plus the controlled/uncontrolled decision.",
+      "assertions": [
+        "Recommends composition (children/slots) over boolean configuration",
+        "Proposes a compound component API with a concrete usage example",
+        "Addresses the controlled vs uncontrolled decision for open state",
+        "Mentions the combinatorial testing problem the boolean props create"
+      ],
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "self-grading",
+      "prompt": "Here's my design for a vending machine. VendingMachine class has a status enum and every method starts with a switch on it. There's a PaymentProcessor singleton. Products are a List<Product>. Grade it out of 30 and tell me what to fix.",
+      "expected_output": "Applies the rubric, produces a score with per-dimension notes, flags the singleton and the status-switch, and prioritises fixes.",
+      "assertions": [
+        "Produces a numeric score out of 30 with per-dimension breakdown",
+        "Flags the repeated status switch as the signal for the State pattern",
+        "Flags the singleton as a testability and hidden-dependency problem",
+        "Applies at least one automatic red flag from the rubric",
+        "Prioritises the fixes rather than listing them flat"
+      ],
+      "files": []
+    }
+  ]
+}
