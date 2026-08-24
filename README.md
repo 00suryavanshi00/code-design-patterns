@@ -43,7 +43,7 @@ skill/code-design-patterns/
     ├── 01-gof-catalog.md                 All 23 GoF patterns, tiered, with real-codebase sightings
     ├── 02-modern-application-patterns.md DI, Repository, Hexagonal, CQRS, Event Sourcing, plugins
     ├── 03-concurrency-patterns.md        Worker pools, pipelines, actors, CAS, backpressure
-    ├── 04-distributed-resilience-…md     Circuit breakers, sagas, outbox, idempotency, caching
+    ├── 04-distributed-resilience-…md     Breakers, sagas, outbox, sharding, locks, strangler fig
     ├── 05-frontend-patterns.md           Compound components, hooks, providers, error boundaries
     ├── 06-antipatterns-and-smells.md     20 smells with signature + smallest first move
     ├── 07-evaluation-rubric.md           10 dimensions scored /30, red flags, worked example

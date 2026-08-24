@@ -12,9 +12,10 @@ failure, and *unknown*. The third one is why idempotency matters.
 - [Rate limiting](#rate-limiting) · [Load shedding](#load-shedding)
 - [Idempotency key](#idempotency-key) · [Saga](#saga) · [Outbox](#transactional-outbox) ·
   [Expand–Contract](#expandcontract-parallel-change) · [Dead letter queue](#dead-letter-queue)
-- [Caching](#caching-patterns) · [API Gateway / BFF](#api-gateway--bff) ·
-  [Sidecar & Ambassador](#sidecar-and-ambassador) · [Service discovery](#service-discovery) ·
-  [Leader election](#leader-election)
+- [Distributed locks](#distributed-locks) · [Sharding & consistent hashing](#sharding-and-consistent-hashing) ·
+  [Caching](#caching-patterns) · [API Gateway / BFF](#api-gateway--bff) ·
+  [Sidecar & Ambassador](#sidecar-and-ambassador) · [Strangler Fig](#strangler-fig) ·
+  [Service discovery](#service-discovery) · [Leader election](#leader-election)
 
 ---
 
@@ -232,6 +233,57 @@ route new functionality through a new module, migrate incrementally, delete the 
 **Not this when:** you own both sides and can deploy them atomically — a single service and its own
 private table. Then just change it.
 
+## Distributed Locks
+
+**Force:** two instances must not run the same job, or touch the same resource, at the same time —
+and they share no memory, so a mutex is not available.
+
+A lock is a lease in a store everyone can see: `SET job:nightly owner NX PX 30000`. The owner does
+the work and deletes the key (comparing the owner value, so it cannot delete somebody else's lease).
+
+**The caveat that matters more than the implementation:** a lease can expire while its holder still
+believes it holds the lock — a GC pause, a slow disk, a paused VM — and then two holders write.
+No amount of clock cleverness removes this; **Redlock's multi-node voting does not remove it
+either**, and the argument about whether it is safe is really an argument about whether the system
+being protected can tolerate two writers.
+
+So: **do not rely on a distributed lock for correctness.** Use it to reduce duplicate work — usually
+worth it — and put the correctness invariant where the write lands: a **fencing token** (a
+monotonically increasing number issued with the lease, which the resource rejects if stale), a
+conditional write, or a unique constraint (`10-persistence-patterns.md`). Leader election
+(`#leader-election`) is the same lease with the same caveat and the same fix.
+
+**Not this when:** the work is idempotent anyway — then let both run and let the store deduplicate,
+which is simpler and cannot go wrong under a pause. And not when the lock would be held across a
+long or unbounded operation; scope the lease to something you can bound.
+
+## Sharding and Consistent Hashing
+
+**Force:** the dataset or the request load exceeds one node, so state must be partitioned rather
+than replicated.
+
+The design decision is the **shard key**, and almost every sharding failure is a key failure, not a
+mechanism failure. It must spread load evenly *and* keep the things you query together on one shard.
+`tenant_id` keeps a customer's data local but produces one enormous tenant; `user_id` spreads evenly
+but makes "all orders in this region" a scatter-gather across every shard.
+
+**Modulo hashing (`hash(key) % N`) is the trap:** changing N remaps almost every key, so adding one
+node moves nearly all the data and empties every cache at once. **Consistent hashing** places nodes
+and keys on a ring and moves only the keys between the departing node and its successor — roughly
+`1/N` of the data — which is why caches, sharded gateways and Dynamo-style stores use it. Use
+**virtual nodes** (each physical node placed at many ring positions), or the distribution is
+visibly lumpy at small N. **Rendezvous (HRW) hashing** is the simpler alternative with the same
+property and no ring bookkeeping.
+
+**State three things or the design is incomplete:** how a **hot shard** is handled (a celebrity key
+saturates one node however good the hash is — split it, or give it a dedicated path), how
+**resharding** happens without downtime (double-write and backfill — expand–contract again), and
+what a **cross-shard query or transaction** costs, because that is what quietly ends up in the
+application layer.
+
+**In the wild:** Cassandra and DynamoDB partition keys, Vitess and Citus for sharded SQL,
+Envoy's ring-hash load balancer, Memcached client rings.
+
 ## Dead Letter Queue
 
 Messages that fail repeatedly get quarantined rather than blocking the queue or retrying forever.
@@ -268,6 +320,30 @@ The application stays language-agnostic and free of that logic.
 
 **Ambassador:** a sidecar specifically proxying *outbound* calls, applying retries, circuit
 breaking, and discovery on the service's behalf.
+
+## Strangler Fig
+
+**Force:** a system must be replaced, but a rewrite that ships in one piece at the end is the
+highest-risk plan available and the one that gets cancelled halfway.
+
+Put a facade — a proxy, a router, an API gateway — in front of the old system so every call goes
+through one place you control. Then move functionality behind it, one slice at a time: the new
+implementation serves route A while everything else falls through to the old system. Each slice is a
+small deploy with a small rollback. The old system shrinks until it serves nothing, and *then* it is
+deleted.
+
+**Choose slices by seam, not by module size.** The first slice should be something with a clean data
+boundary and real but survivable traffic — not the hardest subsystem (you will learn nothing but
+pain) and not a dead endpoint (you will learn nothing at all).
+
+**The two hard parts, which the diagram never shows:** shared data, where old and new both write —
+that is the expand–contract problem above, and often the reason a slice takes longer than expected;
+and **the deletion**, which needs the same instrumentation as a deprecation, a metric proving the
+old path is unused, and a date. A strangler that never contracts is just two systems.
+
+**Not this when:** the system is small enough to rewrite in a sprint, or nothing can front it with a
+stable interface. And it is not a licence to skip the design work — the slices need to land in a
+target architecture somebody has drawn.
 
 ## Service Discovery
 

@@ -12,7 +12,8 @@ richest one, but the forces apply to Vue, Svelte, SwiftUI, and Compose with diff
   [Props getters](#props-getters) · [State Reducer](#state-reducer) ·
   [Controlled vs uncontrolled](#controlled-vs-uncontrolled)
 - [Error Boundary](#error-boundary) · [Suspense & data fetching](#suspense-and-data-fetching) ·
-  [State machines](#state-machines-in-ui) · [Project structure](#project-structure)
+  [State machines](#state-machines-in-ui) · [Optimistic UI](#optimistic-ui-updates) ·
+  [Project structure](#project-structure)
 
 ---
 
@@ -164,6 +165,33 @@ media players are the classic candidates. XState formalises it, but a `useReduce
 `switch` on state is often enough.
 
 This is the frontend expression of "make illegal states unrepresentable".
+
+## Optimistic UI Updates
+
+**Force:** the round trip is 300ms and the interaction should feel instant — a like, a checkbox, a
+drag-reorder, adding an item to a list.
+
+Apply the change to local state immediately, fire the request, and reconcile when it answers. The
+pattern is not the optimism; it is the **rollback**, and that is the part designs omit:
+
+1. **Keep the previous state** before mutating — the rollback needs something to roll back to.
+2. **On failure, restore it and say so.** Silently reverting is worse than a spinner: the user
+   believes their change stuck and it did not.
+3. **Reconcile with the server's version, do not assume yours won.** The server may have normalised,
+   renumbered, or rejected part of it.
+4. **Key temporary entities.** An optimistically created row has no server id yet; give it a client
+   id and swap it when the real one arrives, or the reconcile duplicates the row.
+
+**Not this when:** the operation can fail for reasons the user cannot predict or undo — payments,
+irreversible deletes, anything with money or legal effect. Optimism is for operations that almost
+always succeed and are trivially retried. And not when two users edit the same thing concurrently:
+that is conflict resolution (last-write-wins, CRDTs, or a version conflict surfaced to the user),
+and a design that says "optimistic" when it means "we ignore concurrent edits" has skipped the hard
+part — see optimistic locking in `10-persistence-patterns.md` for the server side of the same
+argument.
+
+**In the wild:** TanStack Query's `onMutate`/`onError` rollback, Apollo's optimistic response, React's
+`useOptimistic`. All three exist because hand-rolling the rollback is where it goes wrong.
 
 ## Project Structure
 
