@@ -1,10 +1,11 @@
 {
   "skill_name": "code-design-patterns",
-  "notes": "Assertions are written to be objectively checkable by a grader reading the output. Cases 4 and 5 are negative tests: the correct behaviour is restraint — a simple function and a refused pattern — not more patterns.",
+  "notes": "Assertions are written to be objectively checkable by a grader reading the output. Cases flagged \"negative\": true (4 and 5) are restraint tests: the correct behaviour is a simple function and a refused pattern, not more patterns. tools/validate.py checks that this sentence still names the flagged cases.",
   "evals": [
     {
       "id": 1,
       "name": "parking-lot-classic-lld",
+      "negative": false,
       "prompt": "Design a parking lot system. It has multiple floors, different vehicle types, and charges by the hour. Give me the class design in Java.",
       "expected_output": "Entity model (Lot/Floor/Spot/Vehicle/Ticket), a strategy interface on allocation and a separate one on pricing, an explicit concurrency answer for spot claiming, a pattern ledger with rejected alternatives, and an extension walkthrough.",
       "assertions": [
@@ -22,6 +23,7 @@
     {
       "id": 2,
       "name": "review-god-class",
+      "negative": false,
       "prompt": "Can you review this? It's our OrderService. It's about 400 lines. It validates the order, calculates tax and discounts, calls Stripe, writes to Postgres with raw SQL, sends a confirmation email, and updates our analytics. All of it is in one class and everything is static so we can call it from anywhere.",
       "expected_output": "A rubric-structured review that leads with the two highest-leverage problems and gives a concrete first refactoring move, rather than an exhaustive list.",
       "assertions": [
@@ -37,6 +39,7 @@
     {
       "id": 3,
       "name": "resilience-composition",
+      "negative": false,
       "prompt": "Our checkout service calls a payment provider that has been flaky lately. Sometimes it times out and we're not sure whether the charge went through. What should the call path look like?",
       "expected_output": "Composed resilience: timeout, retry with jitter gated on idempotency, circuit breaker, bulkhead, fallback, with the unknown-outcome case handled explicitly.",
       "assertions": [
@@ -52,6 +55,7 @@
     {
       "id": 4,
       "name": "restraint-negative-test",
+      "negative": true,
       "prompt": "I have a function that formats a date string three different ways depending on the user's locale. What design pattern should I use here?",
       "expected_output": "Restraint: a map or a simple function is the answer; a Strategy class hierarchy would be overkill. The skill should say so directly.",
       "assertions": [
@@ -65,6 +69,7 @@
     {
       "id": 5,
       "name": "wrong-axis-visitor",
+      "negative": true,
       "prompt": "I'm building a plugin system where third parties will add new node types to our workflow engine over time. I read about the Visitor pattern — should I use it for processing the nodes?",
       "expected_output": "No, with the axis-of-change reasoning: Visitor makes new operations cheap and new types expensive, which is backwards when types are the thing that churns.",
       "assertions": [
@@ -78,6 +83,7 @@
     {
       "id": 6,
       "name": "concurrency-correctness",
+      "negative": false,
       "prompt": "Write a thread-safe in-memory LRU cache with a max size, in Go. Explain the design.",
       "expected_output": "Map plus doubly-linked list, correct O(1) claims, an explicit statement of what the mutex guards and why the get path also mutates, and a note on sharding for contention.",
       "assertions": [
@@ -93,6 +99,7 @@
     {
       "id": 7,
       "name": "frontend-component-api",
+      "negative": false,
       "prompt": "Our Modal component in the design system now has 11 boolean props (showHeader, showFooter, isLarge, hasCloseButton, ...) and nobody can remember which combinations work. How should we restructure it?",
       "expected_output": "Composition over configuration, likely compound components, plus the controlled/uncontrolled decision.",
       "assertions": [
@@ -106,6 +113,7 @@
     {
       "id": 8,
       "name": "self-grading",
+      "negative": false,
       "prompt": "Here's my design for a vending machine. VendingMachine class has a status enum and every method starts with a switch on it. There's a PaymentProcessor singleton. Products are a List<Product>. Grade it out of 30 and tell me what to fix.",
       "expected_output": "Applies the rubric, produces a score with per-dimension notes, flags the singleton and the status-switch, and prioritises fixes.",
       "assertions": [
